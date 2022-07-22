@@ -13,6 +13,8 @@ from app import get_args, \
                 pre_process_landmark, \
                 draw_bounding_rect, draw_landmarks
 
+write_color = (255, 0, 0, 255) # (B, G, R, A)
+
 def main():
   # 引数解析
   args = get_args()
@@ -27,8 +29,6 @@ def main():
   min_tracking_confidence = args.min_tracking_confidence
 
   use_brect = True
-
-  write_color = (255, 0, 0, 255) # (B, G, R, A)
 
   # カメラ準備
   cap = cv.VideoCapture(cap_device)
@@ -105,33 +105,7 @@ def main():
         # 描画
         debug_image = draw_bounding_rect(use_brect, debug_image, brect)
         debug_image = draw_landmarks(debug_image, landmark_list)
-        if hand_sign_id == 2: # 指差し
-          index_finger = landmark_list[8]
-          if prev_x is not None:
-            interpolation_x = list(map(int, np.linspace(prev_x, index_finger[1], 10)[1:])) # 前の点と検出した点で10個の線形補間
-            interpolation_y = list(map(int, np.linspace(prev_y, index_finger[0], 10)[1:])) #
-            for x, y in zip(interpolation_x, interpolation_y):
-              writer = cv.circle(
-                writer,
-                (y, x),
-                20,
-                write_color,
-                -1,
-              )
-          else:
-            writer = cv.circle(
-                writer,
-                index_finger,
-                20,
-                write_color,
-                -1,
-            )
-          prev_x, prev_y = index_finger[1], index_finger[0]
-        else: # パーかグー
-          prev_x, prev_y = None, None # 点の履歴を削除
-          if hand_sign_id == 0: # パー
-            # 人差し指の軌跡を初期化
-            writer = np.zeros((cap_height, cap_width, 4), dtype=np.float32)
+        writer, prev_x, prev_y = draw_writer(hand_sign_id, landmark_list, cap_height, cap_width, args.without_linear_interpolation, writer, prev_x, prev_y)
 
         debug_image = draw_info_text(
             debug_image,
@@ -141,7 +115,7 @@ def main():
         )
 
     # debug_image = mask(debug_image, writer)
-    debug_image = draw(debug_image, writer)
+    debug_image = write(debug_image, writer)
 
     debug_image = draw_info(debug_image, fps)
 
@@ -150,6 +124,58 @@ def main():
 
   cap.release()
   cv.destroyAllWindows()
+
+def draw_writer(hand_sign_id, landmark_list, cap_height, cap_width, without_linear_interpolation, writer, prev_x, prev_y):
+  if without_linear_interpolation:
+    return draw_without_linear_interpolation(hand_sign_id, landmark_list, cap_height, cap_width, writer), None, None
+  else:
+    return draw_with_linear_interpolation(hand_sign_id, landmark_list, cap_height, cap_width, writer, prev_x, prev_y)
+
+def draw_without_linear_interpolation(hand_sign_id, landmark_list, cap_height, cap_width, writer):
+  if hand_sign_id == 2: # 指差し
+    index_finger = landmark_list[8]
+    writer = cv.circle(
+        writer,
+        index_finger,
+        20,
+        write_color,
+        -1,
+    )
+  else: # パーかグー
+    if hand_sign_id == 0: # パー
+      # 人差し指の軌跡を初期化
+      writer = np.zeros((cap_height, cap_width, 4), dtype=np.float32)
+  return writer
+
+def draw_with_linear_interpolation(hand_sign_id, landmark_list, cap_height, cap_width, writer, prev_x, prev_y):
+  if hand_sign_id == 2: # 指差し
+    index_finger = landmark_list[8]
+    if prev_x is not None:
+      interpolation_x = list(map(int, np.linspace(prev_x, index_finger[1], 10)[1:])) # 前の点と検出した点で10個の線形補間
+      interpolation_y = list(map(int, np.linspace(prev_y, index_finger[0], 10)[1:])) #
+      for x, y in zip(interpolation_x, interpolation_y):
+        writer = cv.circle(
+          writer,
+          (y, x),
+          20,
+          write_color,
+          -1,
+        )
+    else:
+      writer = cv.circle(
+          writer,
+          index_finger,
+          20,
+          write_color,
+          -1,
+      )
+    prev_x, prev_y = index_finger[1], index_finger[0]
+  else: # パーかグー
+    prev_x, prev_y = None, None # 点の履歴を削除
+    if hand_sign_id == 0: # パー
+      # 人差し指の軌跡を初期化
+      writer = np.zeros((cap_height, cap_width, 4), dtype=np.float32)
+  return writer, prev_x, prev_y
 
 # def mask(image, writer):
 #   hsv = cv.cvtColor(writer, cv.COLOR_BGR2HSV)
@@ -165,7 +191,7 @@ def main():
 #   image[:] = np.where(mask[:, :, np.newaxis] == 0, image, writer)
 #   return image
 
-def draw(image, writer):
+def write(image, writer):
   image[:, :] = image[:, :] * (1 - writer[:, :, 3:] / 255) + \
                       writer[:, :, :3] * (writer[:, :, 3:] / 255)
   return image
