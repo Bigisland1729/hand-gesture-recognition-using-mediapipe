@@ -28,7 +28,7 @@ def main():
 
   use_brect = True
 
-  write_color = (255, 0, 0) # (B, G, R)
+  write_color = (255, 0, 0, 255) # (B, G, R, A)
 
   # カメラ準備
   cap = cv.VideoCapture(cap_device)
@@ -62,7 +62,7 @@ def main():
   cvFpsCalc = CvFpsCalc(buffer_len=10)
 
   # 人差し指の軌跡を記録する
-  writer = np.zeros((cap_height, cap_width, 3), dtype=np.float32)
+  writer = np.zeros((cap_height, cap_width, 4), dtype=np.float32)
   prev_x, prev_y = None, None
 
   while True:
@@ -108,8 +108,8 @@ def main():
         if hand_sign_id == 2: # 指差し
           index_finger = landmark_list[8]
           if prev_x is not None:
-            interpolation_x = list(map(int, np.linspace(prev_x, index_finger[1], 10)[1:]))
-            interpolation_y = list(map(int, np.linspace(prev_y, index_finger[0], 10)[1:]))
+            interpolation_x = list(map(int, np.linspace(prev_x, index_finger[1], 10)[1:])) # 前の点と検出した点で10個の線形補間
+            interpolation_y = list(map(int, np.linspace(prev_y, index_finger[0], 10)[1:])) #
             for x, y in zip(interpolation_x, interpolation_y):
               writer = cv.circle(
                 writer,
@@ -127,9 +127,11 @@ def main():
                 -1,
             )
           prev_x, prev_y = index_finger[1], index_finger[0]
-        elif hand_sign_id == 0: # パー
-          # 人差し指の軌跡を初期化
-          writer = np.zeros((cap_height, cap_width, 3), dtype=np.float32)
+        else: # パーかグー
+          prev_x, prev_y = None, None # 点の履歴を削除
+          if hand_sign_id == 0: # パー
+            # 人差し指の軌跡を初期化
+            writer = np.zeros((cap_height, cap_width, 4), dtype=np.float32)
 
         debug_image = draw_info_text(
             debug_image,
@@ -138,7 +140,8 @@ def main():
             keypoint_classifier_labels[hand_sign_id],
         )
 
-    debug_image = mask(debug_image, writer)
+    # debug_image = mask(debug_image, writer)
+    debug_image = draw(debug_image, writer)
 
     debug_image = draw_info(debug_image, fps)
 
@@ -148,18 +151,23 @@ def main():
   cap.release()
   cv.destroyAllWindows()
 
-def mask(image, writer):
-  hsv = cv.cvtColor(writer, cv.COLOR_BGR2HSV)
+# def mask(image, writer):
+#   hsv = cv.cvtColor(writer, cv.COLOR_BGR2HSV)
 
-  bin_img = cv.inRange(hsv, (10, 0, 0), (255, 255, 255))
-  contours, _ = cv.findContours(bin_img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-  if not contours: return image
-  # contours = max(contours, key=lambda x: cv.contourArea(x))
+#   bin_img = cv.inRange(hsv, (10, 0, 0), (255, 255, 255))
+#   contours, _ = cv.findContours(bin_img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+#   if not contours: return image
+#   # contours = max(contours, key=lambda x: cv.contourArea(x))
 
-  mask = np.zeros_like(bin_img)
-  cv.drawContours(mask, contours, -1, color=255, thickness=-1)
+#   mask = np.zeros_like(bin_img)
+#   cv.drawContours(mask, contours, -1, color=255, thickness=-1)
 
-  image[:] = np.where(mask[:, :, np.newaxis] == 0, image, writer)
+#   image[:] = np.where(mask[:, :, np.newaxis] == 0, image, writer)
+#   return image
+
+def draw(image, writer):
+  image[:, :] = image[:, :] * (1 - writer[:, :, 3:] / 255) + \
+                      writer[:, :, :3] * (writer[:, :, 3:] / 255)
   return image
 
 def draw_info_text(image, brect, handedness, hand_sign_text):
