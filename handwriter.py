@@ -63,6 +63,7 @@ def main():
 
   # 人差し指の軌跡を記録する
   writer = np.zeros((cap_height, cap_width, 3), dtype=np.float32)
+  prev_x, prev_y = None, None
 
   while True:
     fps = cvFpsCalc.get()
@@ -106,13 +107,26 @@ def main():
         debug_image = draw_landmarks(debug_image, landmark_list)
         if hand_sign_id == 2: # 指差し
           index_finger = landmark_list[8]
-          writer = cv.circle(
-            writer,
-            index_finger,
-            20,
-            write_color,
-            -1,
-          )
+          if prev_x is not None:
+            interpolation_x = list(map(int, np.linspace(prev_x, index_finger[1], 10)[1:]))
+            interpolation_y = list(map(int, np.linspace(prev_y, index_finger[0], 10)[1:]))
+            for x, y in zip(interpolation_x, interpolation_y):
+              writer = cv.circle(
+                writer,
+                (y, x),
+                20,
+                write_color,
+                -1,
+              )
+          else:
+            writer = cv.circle(
+                writer,
+                index_finger,
+                20,
+                write_color,
+                -1,
+            )
+          prev_x, prev_y = index_finger[1], index_finger[0]
         elif hand_sign_id == 0: # パー
           # 人差し指の軌跡を初期化
           writer = np.zeros((cap_height, cap_width, 3), dtype=np.float32)
