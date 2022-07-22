@@ -1,3 +1,20 @@
+# handwriter.py
+指を差す動作をしている時は丸が描画され、手を開くと描画されていたものが消えます。
+```bash
+python handwriter.py
+```
+オプション
+* --device<br>カメラデバイス番号の指定 (デフォルト：0)
+* --width<br>カメラキャプチャ時の横幅 (デフォルト：960)
+* --height<br>カメラキャプチャ時の縦幅 (デフォルト：540)
+* --use_static_image_mode<br>MediaPipeの推論にstatic_image_modeを利用するか否か (デフォルト：未指定)
+* --min_detection_confidence<br>
+検出信頼値の閾値 (デフォルト：0.5)
+* --min_tracking_confidence<br>
+トラッキング信頼値の閾値 (デフォルト：0.5)
+* --without_linear_interpolation, -without_lin<br>
+線形補間を使用しない場合に指定 (デフォルト：False)
+
 [Japanese/[English](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe/blob/main/README_EN.md)]
 
 ---
