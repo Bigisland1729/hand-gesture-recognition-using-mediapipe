@@ -13,7 +13,7 @@ python handwriter.py
 * --min_tracking_confidence<br>
 トラッキング信頼値の閾値 (デフォルト：0.5)
 * --without_linear_interpolation, -without_lin<br>
-線形補間を使用しない場合に指定 (デフォルト：False)
+線形補間を使用しない場合に指定
 
 [Japanese/[English](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe/blob/main/README_EN.md)]
 
