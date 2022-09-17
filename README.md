@@ -1,5 +1,12 @@
 # handwriter.py
-指を差す動作をしている時は丸が描画され、手を開くと描画されていたものが消えます。
+指を差す動作をしている時は丸が描画され、手を開くと描画されていたものが消えます。<br>
+また、丸は右手だと青色、左手だと緑になります。<br>
+escキーでフォトモードになり、フォトモードでは、
+* **Enter**:撮影
+* **ESC**:フォトモード終了
+* **q**:プログラム終了
+
+です。
 ```bash
 python handwriter.py
 ```
@@ -12,8 +19,10 @@ python handwriter.py
 検出信頼値の閾値 (デフォルト：0.5)
 * --min_tracking_confidence<br>
 トラッキング信頼値の閾値 (デフォルト：0.5)
-* --without_linear_interpolation, -without_lin<br>
-線形補間を使用しない場合に指定
+* --interpolation_num, -i (デフォルト : 10)<br>
+線形補間をする数を指定
+* --save_path (デフォルト : ./)<br>
+画像を保存するパスを指定
 
 [Japanese/[English](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe/blob/main/README_EN.md)]
 
