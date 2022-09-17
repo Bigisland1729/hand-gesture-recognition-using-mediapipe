@@ -7,6 +7,7 @@ escキーでフォトモードになり、フォトモードでは、
 * **q**:プログラム終了
 
 です。
+<<<<<<< HEAD
 
 ## ディレクトリ構成
 ```
@@ -26,6 +27,8 @@ escキーでフォトモードになり、フォトモードでは、
 └── utils
 ```
 
+=======
+>>>>>>> 3ea9bd1 (Update README.md (画像撮影について))
 ```bash
 python handwriter.py
 ```
@@ -40,8 +43,13 @@ python handwriter.py
 トラッキング信頼値の閾値 (デフォルト：0.5)
 * --interpolation_num, -i (デフォルト : 10)<br>
 線形補間をする数を指定
+<<<<<<< HEAD
 * --delay (デフォルト : 180)<br>
 画像をGoogle Driveに保存してから削除するまでの時間(秒)
+=======
+* --save_path (デフォルト : ./)<br>
+画像を保存するパスを指定
+>>>>>>> 3ea9bd1 (Update README.md (画像撮影について))
 
 [Japanese/[English](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe/blob/main/README_EN.md)]
 
