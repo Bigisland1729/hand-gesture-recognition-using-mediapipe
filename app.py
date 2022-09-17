@@ -32,7 +32,8 @@ def get_args():
                         help='min_tracking_confidence',
                         type=int,
                         default=0.5)
-    parser.add_argument("--without_linear_interpolation", "-without_lin", action='store_true')
+    parser.add_argument("--interpolation_num", "-i", help='number of interpolation(>0)', type=int, default=10)
+    parser.add_argument("--save_path", default='./')
 
     args = parser.parse_args()
 
