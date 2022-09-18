@@ -1,6 +1,12 @@
 import csv
 import copy
 import datetime
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
+from threading import Timer
+import os
+import qrcode
+from PIL import Image, ImageDraw, ImageFont
 
 import numpy as np
 import cv2 as cv
@@ -26,7 +32,6 @@ def main():
   cap_device = args.device
   cap_width = args.width
   cap_height = args.height
-  # width:960, height:540は不可
 
   use_static_image_mode = args.use_static_image_mode
   min_detection_confidence = args.min_detection_confidence
@@ -35,6 +40,21 @@ def main():
   assert args.interpolation_num > 0
 
   use_brect = True
+
+  gauth = GoogleAuth()
+  gauth.LocalWebserverAuth()
+
+  drive = GoogleDrive(gauth)
+
+  # 保存場所: My Drive/img_folder
+  img_folder = drive.ListFile({'q': 'title = "img_folder"'}).GetList()
+  if len(img_folder) == 0:
+    metadata = {'title': 'img_folder', 'mimetype': 'application/vnd.google-apps.folder'}
+    f = drive.CreateFile(metadata)
+    f.Upload()
+    img_folder = drive.ListFile({'q': 'title = "img_folder"'}).GetList()
+
+  parent_id = img_folder[0]['id'] # img_folderのid
 
   # カメラ準備
   cap = cv.VideoCapture(cap_device)
@@ -78,7 +98,7 @@ def main():
     # キー処理(ESC : フォトモード)
     key = cv.waitKey(1)
     if key == 27:  # ESC
-      if not photo_mode(cap, writer, args.save_path):
+      if not photo_mode(cap, writer, drive, parent_id, args.delay):
         break
 
     ret, image = cap.read()
@@ -134,10 +154,11 @@ def main():
 
   cap.release()
   cv.destroyAllWindows()
+  cv.waitKey(1)
 
-def photo_mode(cap, writer, path):
+def photo_mode(cap, writer, drive:GoogleDrive, parent_id, delay=180):
   now = datetime.datetime.now()
-  path = path + now.strftime('%Y-%m-%d %H:%M:%S') + '.png'
+  path = now.strftime('%Y-%m-%d %H:%M:%S') + '.png'
   while True:
     ret, image = cap.read()
     if not ret:
@@ -156,6 +177,46 @@ def photo_mode(cap, writer, path):
     key = cv.waitKey(1) # キー処理(Enter: 画像保存, ESC: 終了)
     if key == 13: # Enter
       cv.imwrite(path, image)
+      # Now Uploading
+      now_uploading = copy.deepcopy(debug_image)
+      cv.putText(now_uploading, 'Now Uploading...', (100, 200), cv.FONT_HERSHEY_TRIPLEX
+                  ,4.0, (0, 0, 0), 10, cv.LINE_AA)
+      cv.imshow('Hand Writer', now_uploading)
+      cv.waitKey(1)
+
+      # GDrive保存
+      metadata = {'title': path, 'mimetype': 'image/png', 'parents': [{'id': parent_id}]}
+      f = drive.CreateFile(metadata)
+      f.SetContentFile(path)
+      f.Upload()
+      f.InsertPermission({'type': 'anyone',
+                          'value': 'anyone',
+                          'role': 'reader'})
+      Timer(delay,f.Delete).start()
+
+      cv.putText(debug_image, 'Uploading Finished!', (80, 200), cv.FONT_HERSHEY_TRIPLEX
+                  ,3.0, (0, 0, 0), 8, cv.LINE_AA)
+      cv.imshow('Hand Writer', debug_image)
+      cv.waitKey(1)
+
+      # QRコード
+      url = 'https://drive.google.com/file/d/{}/view'.format(f.get('id'))
+      qr = qrcode.make(url)
+      qr = qr.convert('L')
+      link = Image.new('L', (600, 550), 255) # 背景
+      link.paste(qr, (75, 50))
+      draw = ImageDraw.Draw(link)
+      font = ImageFont.truetype('./hiraginokakugoW4.ttc', 20) # フォントを指定
+      text = 'Here is the link to GDrive. / Google Driveのリンクはこちら'
+      draw.text(xy=(300, 25), text=text, fill=0, font=font, anchor='mm')
+      text = 'Press key to close / キーを押して閉じる'
+      draw.text(xy=(300, 50), text=text, fill=0, font=font, anchor='mm')
+      link = np.array(link, dtype=np.uint8)
+      cv.imshow('Link', link)
+      cv.waitKey(0)
+      cv.destroyWindow('Link')
+      cv.waitKey(1)
+      os.remove(path)
       return True
     elif key == 27: # ESC
       return True

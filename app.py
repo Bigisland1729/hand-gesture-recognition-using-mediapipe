@@ -33,7 +33,7 @@ def get_args():
                         type=int,
                         default=0.5)
     parser.add_argument("--interpolation_num", "-i", help='number of interpolation(>0)', type=int, default=10)
-    parser.add_argument("--save_path", default='./')
+    parser.add_argument("--delay", help='how many seconds to delete the image', type=int, default=180)
 
     args = parser.parse_args()
 

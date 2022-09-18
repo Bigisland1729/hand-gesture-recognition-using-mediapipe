@@ -1,0 +1,10 @@
+# OAuth 2.0 クライアントの認証情報を指定
+client_config_file: client_secrets.json
+
+# 認証情報をファイルに保存する設定
+save_credentials: True
+save_credentials_backend: file
+save_credentials_file: saved_credentials.json
+
+# 認証情報(credentials)を自動で更新する設定
+get_refresh_token: True
