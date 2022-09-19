@@ -24,6 +24,8 @@ python handwriter.py
 * --save_path (デフォルト : ./)<br>
 画像を保存するパスを指定
 
+## [Google Driveで画像を公開するブランチ](https://github.com/Bigisland1729/hand-gesture-recognition-using-mediapipe/tree/gdrive)
+
 [Japanese/[English](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe/blob/main/README_EN.md)]
 
 ---
