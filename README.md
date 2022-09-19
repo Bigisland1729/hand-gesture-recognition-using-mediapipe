@@ -6,8 +6,8 @@ escキーでフォトモードになり、フォトモードでは、
 * **ESC**:フォトモード終了
 * **q**:プログラム終了
 
-です。
-<<<<<<< HEAD
+です。<br>
+Enterキーを押した後3秒後に撮影し、Google Driveに公開、リンクのQRコードが表示され、一定時間後に画像は削除されます。
 
 ## ディレクトリ構成
 ```
@@ -21,14 +21,25 @@ escキーでフォトモードになり、フォトモードでは、
 ├── hiraginokakugoW4.ttc # フォント
 ├── keypoint_classification.ipynb
 ├── model
+│   ├── keypoint_classifier
+│   │   ├── keypoint.csv
+│   │   ├── keypoint_classifier.hdf5
+│   │   ├── keypoint_classifier.py
+│   │   ├── keypoint_classifier.tflite
+│   │   └── keypoint_classifier_label.csv
+│   └── point_history_classifier
+│       ├── point_history.csv
+│       ├── point_history_classifier.hdf5
+│       ├── point_history_classifier.py
+│       ├── point_history_classifier.tflite
+│       └── point_history_classifier_label.csv
 ├── point_history_classification.ipynb
 ├── requirements.txt
 ├── settings.yaml
 └── utils
+    └── cvfpscalc.py
 ```
 
-=======
->>>>>>> 3ea9bd1 (Update README.md (画像撮影について))
 ```bash
 python handwriter.py
 ```
@@ -43,13 +54,8 @@ python handwriter.py
 トラッキング信頼値の閾値 (デフォルト：0.5)
 * --interpolation_num, -i (デフォルト : 10)<br>
 線形補間をする数を指定
-<<<<<<< HEAD
 * --delay (デフォルト : 180)<br>
 画像をGoogle Driveに保存してから削除するまでの時間(秒)
-=======
-* --save_path (デフォルト : ./)<br>
-画像を保存するパスを指定
->>>>>>> 3ea9bd1 (Update README.md (画像撮影について))
 
 [Japanese/[English](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe/blob/main/README_EN.md)]
 
