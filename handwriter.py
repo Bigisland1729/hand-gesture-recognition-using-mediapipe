@@ -4,6 +4,7 @@ import datetime
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from threading import Timer
+import time
 import os
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
@@ -74,7 +75,7 @@ def main():
       min_tracking_confidence=min_tracking_confidence,
   )
 
-  keypoint_classifier = KeyPointClassifier()
+  keypoint_classifier = KeyPointClassifier('model/keypoint_classifier/keypoint_classifier_retrained.tflite')
 
   # ラベル読み込み
   with open('model/keypoint_classifier/keypoint_classifier_label.csv',
@@ -120,6 +121,8 @@ def main():
                                             results.multi_handedness):
         # 外接矩形の計算
         brect = calc_bounding_rect(debug_image, hand_landmarks)
+        if rectangle_area(*brect) < 7500: # 遠くの手は無視(誤削除防止)
+          continue
         # ランドマークの計算
         landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
@@ -144,7 +147,6 @@ def main():
             keypoint_classifier_labels[hand_sign_id],
         )
 
-    # debug_image = mask(debug_image, writer)
     debug_image = write(debug_image, writer)
 
     debug_image = draw_info(debug_image, fps)
@@ -157,9 +159,10 @@ def main():
   cv.waitKey(1)
 
 def photo_mode(cap, writer, drive:GoogleDrive, parent_id, delay=180):
-  now = datetime.datetime.now()
-  path = now.strftime('%Y-%m-%d %H:%M:%S') + '.png'
   while True:
+    now = datetime.datetime.now()
+    path = now.strftime('%Y-%m-%d %H:%M:%S') + '.png'
+
     ret, image = cap.read()
     if not ret:
       break
@@ -174,11 +177,27 @@ def photo_mode(cap, writer, drive:GoogleDrive, parent_id, delay=180):
 
     cv.imshow('Hand Writer', debug_image)
 
-    key = cv.waitKey(1) # キー処理(Enter: 画像保存, ESC: 終了)
+    key = cv.waitKey(1) # キー処理(Enter: 画像保存, ESC: 終了, q: プログラム終了)
     if key == 13: # Enter
+      start_time = time.time()
+      elapsed_time = 0
+      while elapsed_time < 3:
+        ret, image = cap.read()
+        image = cv.flip(image, 1)
+        image = write(image, writer)
+        debug_image = copy.deepcopy(image)
+        cv.putText(debug_image, f'{3 - int(elapsed_time)}', (580, 400), cv.FONT_HERSHEY_TRIPLEX,
+                    8, (0, 0, 0), 4, cv.LINE_AA)
+        cv.putText(debug_image, f'{3 - int(elapsed_time)}', (580, 400), cv.FONT_HERSHEY_TRIPLEX,
+                    8, (255, 255, 255), 2, cv.LINE_AA)
+        cv.imshow('Hand Writer', debug_image)
+        cv.waitKey(1)
+
+        elapsed_time = time.time() - start_time
+
       cv.imwrite(path, image)
       # Now Uploading
-      now_uploading = copy.deepcopy(debug_image)
+      now_uploading = copy.deepcopy(image)
       cv.putText(now_uploading, 'Now Uploading...', (100, 200), cv.FONT_HERSHEY_TRIPLEX
                   ,4.0, (0, 0, 0), 10, cv.LINE_AA)
       cv.imshow('Hand Writer', now_uploading)
@@ -194,9 +213,9 @@ def photo_mode(cap, writer, drive:GoogleDrive, parent_id, delay=180):
                           'role': 'reader'})
       Timer(delay,f.Delete).start()
 
-      cv.putText(debug_image, 'Uploading Finished!', (80, 200), cv.FONT_HERSHEY_TRIPLEX
+      cv.putText(image, 'Uploading Finished!', (80, 200), cv.FONT_HERSHEY_TRIPLEX
                   ,3.0, (0, 0, 0), 8, cv.LINE_AA)
-      cv.imshow('Hand Writer', debug_image)
+      cv.imshow('Hand Writer', image)
       cv.waitKey(1)
 
       # QRコード
@@ -277,6 +296,9 @@ def draw_info(image, fps):
               1.0, (255, 255, 255), 2, cv.LINE_AA)
 
   return image
+
+def rectangle_area(x1, y1, x2, y2):
+  return abs((x2 - x1) * (y2 - y1))
 
 if __name__ == '__main__':
   main()
