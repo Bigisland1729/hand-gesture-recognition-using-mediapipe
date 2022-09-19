@@ -39,6 +39,16 @@ Enterキーを押した後3秒後に撮影し、Google Driveに公開、リン�
 └── utils
     └── cvfpscalc.py
 ```
+    
+## Requirements
+```bash
+python -m venv gdrive # 仮想環境を使う場合
+source gdrive/bin/activate # 〃
+
+pip install -r requirements.txt
+```
+
+## Usage
 
 ```bash
 python handwriter.py
